@@ -6,7 +6,7 @@
   <title>Planificador de Breaks</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       padding: 30px;
       background: linear-gradient(to right, #e0f7fa, #ffffff);
       color: #102027;
@@ -46,33 +46,61 @@
     .btn:hover {
       background: #b71c1c;
     }
-    textarea {
-      border: 1px solid #b0bec5;
-      padding: 10px;
+    .form-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .form-group label {
+      min-width: 80px;
+    }
+    input, select {
+      padding: 8px;
       border-radius: 4px;
-      font-family: monospace;
+      border: 1px solid #b0bec5;
+    }
+    #empleados-lista {
+      margin-top: 20px;
       margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>📋 Asignador de Breaks</h1>
+  <h1>🚀 Planificador de Breaks</h1>
 
-  <h2>📄 Cargar empleados y turnos</h2>
-  <textarea id="input" rows="10" style="width: 100%;">
-Empleado,Sector,Inicio,Fin
-Carla,Pista,13:00,21:00
-Juan,Caja,14:00,22:00
-Sofía,Caja,14:00,22:00
-Luis,Cafe,14:00,22:00
-Maria,Cocina,16:00,20:00
-  </textarea>
+  <h2>🧍‍♂️ Ingresar Empleados</h2>
+  <div id="formulario-empleado">
+    <div class="form-group">
+      <label>Nombre:</label>
+      <input type="text" id="nombre">
+    </div>
+    <div class="form-group">
+      <label>Sector:</label>
+      <select id="sector">
+        <option value="Pista">Pista</option>
+        <option value="Caja">Caja</option>
+        <option value="Cafe">Cafe</option>
+        <option value="Cocina">Cocina</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Inicio:</label>
+      <input type="time" id="inicio">
+    </div>
+    <div class="form-group">
+      <label>Fin:</label>
+      <input type="time" id="fin">
+    </div>
+    <button class="btn" onclick="agregarEmpleado()">➕ Agregar empleado</button>
+  </div>
+
+  <div id="empleados-lista"></div>
 
   <h2>⏰ Horas pico (una por línea, formato HH:MM-HH:MM)</h2>
   <textarea id="pico" rows="3" style="width: 100%;">13:00-14:00
 18:30-20:00</textarea>
 
-  <button class="btn" onclick="asignarBreaks()">Asignar breaks</button>
+  <button class="btn" onclick="asignarBreaks()">📅 Asignar breaks</button>
 
   <h2>📊 Resultado</h2>
   <table id="resultado">
@@ -89,6 +117,33 @@ Maria,Cocina,16:00,20:00
   </table>
 
 <script>
+let empleados = [];
+
+function agregarEmpleado() {
+  const nombre = document.getElementById("nombre").value;
+  const sector = document.getElementById("sector").value;
+  const inicio = document.getElementById("inicio").value;
+  const fin = document.getElementById("fin").value;
+
+  if (!nombre || !inicio || !fin) {
+    alert("Por favor completá todos los campos.");
+    return;
+  }
+
+  empleados.push({ nombre, sector, inicio, fin });
+
+  document.getElementById("nombre").value = "";
+  document.getElementById("inicio").value = "";
+  document.getElementById("fin").value = "";
+
+  mostrarLista();
+}
+
+function mostrarLista() {
+  const contenedor = document.getElementById("empleados-lista");
+  contenedor.innerHTML = `<strong>Empleados cargados:</strong><br>${empleados.map(e => `👤 ${e.nombre} - ${e.sector} (${e.inicio} a ${e.fin})`).join("<br>")}`;
+}
+
 function parseHora(hora) {
   const [h, m] = hora.split(":").map(Number);
   return h * 60 + m;
@@ -99,7 +154,6 @@ function enRango(hora, desde, hasta) {
 }
 
 function asignarBreaks() {
-  const empleados = document.getElementById("input").value.trim().split("\n").slice(1);
   const horasPico = document.getElementById("pico").value.trim().split("\n").map(l => {
     const [d, h] = l.split("-").map(parseHora);
     return { desde: d, hasta: h };
@@ -109,12 +163,11 @@ function asignarBreaks() {
   const resultado = document.querySelector("#resultado tbody");
   resultado.innerHTML = "";
 
-  empleados.forEach(linea => {
-    const [nombre, sector, inicioStr, finStr] = linea.split(",");
-    const inicio = parseHora(inicioStr);
-    const fin = parseHora(finStr);
-    const desde = inicio + 90;
-    const hasta = fin - 60;
+  empleados.forEach(({ nombre, sector, inicio, fin }) => {
+    const inicioMin = parseHora(inicio);
+    const finMin = parseHora(fin);
+    const desde = inicioMin + 90;
+    const hasta = finMin - 60;
 
     let breakAsignado = "No asignado";
 
@@ -139,7 +192,7 @@ function asignarBreaks() {
       break;
     }
 
-    const fila = `<tr><td>${nombre}</td><td>${sector}</td><td>${inicioStr}</td><td>${finStr}</td><td>${breakAsignado}</td></tr>`;
+    const fila = `<tr><td>${nombre}</td><td>${sector}</td><td>${inicio}</td><td>${fin}</td><td>${breakAsignado}</td></tr>`;
     resultado.innerHTML += fila;
   });
 }
