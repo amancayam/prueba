@@ -3,16 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planificador de Breaks</title>
+  <title>Planificador de Breaks - Rush Park</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
+
     body {
       font-family: 'Arial', sans-serif;
       padding: 30px;
-      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      background: linear-gradient(to right, #e3f2fd, #ffffff);
       color: #102027;
     }
     h1 {
-      color: #1565c0;
+      color: #0288d1;
+      font-family: 'Russo One', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     h2 {
       color: #d32f2f;
@@ -63,10 +69,14 @@
       margin-top: 20px;
       margin-bottom: 20px;
     }
+    #logo {
+      height: 40px;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
-  <h1>🚀 Planificador de Breaks</h1>
+  <h1><img id="logo" src="9dd6308e-59ce-404c-bed1-45ac3d11537c.png" alt="Rush Logo"> Planificador de Breaks</h1>
 
   <h2>🧍‍♂️ Ingresar Empleados</h2>
   <div id="formulario-empleado">
@@ -87,10 +97,6 @@
       <label>Inicio:</label>
       <input type="time" id="inicio">
     </div>
-    <div class="form-group">
-      <label>Fin:</label>
-      <input type="time" id="fin">
-    </div>
     <button class="btn" onclick="agregarEmpleado()">➕ Agregar empleado</button>
   </div>
 
@@ -110,19 +116,3 @@
         <th>Sector</th>
         <th>Inicio</th>
         <th>Fin</th>
-        <th>Break asignado</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-<script>
-let empleados = [];
-
-function agregarEmpleado() {
-  const nombre = document.getElementById("nombre").value;
-  const sector = document.getElementById("sector").value;
-  const inicio = document.getElementById("inicio").value;
-  const fin = document.getElementById("fin").value;
-
-  if (!nombre || !inicio || !fin)
