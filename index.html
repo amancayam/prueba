@@ -5,34 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Planificador de Breaks</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 6px; }
-    table { margin-bottom: 20px; width: 100%; background: white; }
-    th { background-color: #f0f0f0; }
-    .btn { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
-    .btn:hover { background: #0056b3; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 30px;
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      color: #102027;
+    }
+    h1 {
+      color: #1565c0;
+    }
+    h2 {
+      color: #d32f2f;
+      margin-top: 40px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+      border-collapse: collapse;
+      padding: 10px;
+    }
+    table {
+      width: 100%;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th {
+      background-color: #0288d1;
+      color: white;
+    }
+    .btn {
+      padding: 10px 20px;
+      background: #d32f2f;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .btn:hover {
+      background: #b71c1c;
+    }
+    textarea {
+      border: 1px solid #b0bec5;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>Asignador de Breaks</h1>
+  <h1>📋 Asignador de Breaks</h1>
 
-  <h2>Cargar empleados y turnos</h2>
-  <textarea id="input" rows="12" style="width: 100%;">
+  <h2>📄 Cargar empleados y turnos</h2>
+  <textarea id="input" rows="10" style="width: 100%;">
 Empleado,Sector,Inicio,Fin
 Carla,Pista,13:00,21:00
 Juan,Caja,14:00,22:00
 Sofía,Caja,14:00,22:00
 Luis,Cafe,14:00,22:00
 Maria,Cocina,16:00,20:00
-    </textarea>
+  </textarea>
 
-  <h2>Horas pico (una por línea, formato HH:MM-HH:MM)</h2>
+  <h2>⏰ Horas pico (una por línea, formato HH:MM-HH:MM)</h2>
   <textarea id="pico" rows="3" style="width: 100%;">13:00-14:00
 18:30-20:00</textarea>
 
   <button class="btn" onclick="asignarBreaks()">Asignar breaks</button>
 
-  <h2>Resultado</h2>
+  <h2>📊 Resultado</h2>
   <table id="resultado">
     <thead>
       <tr>
