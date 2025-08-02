@@ -1,259 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Planilla de Horarios Automatizados</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planificador de Breaks</title>
   <style>
-    .sector-color-pista { background-color: #FFE4E1; }
-    .sector-color-caja { background-color: #E6E6FA; }
-    .sector-color-depo { background-color: #E0FFFF; }
-    .sector-color-cocina { background-color: #F0FFF0; }
-    .sector-color-cafe { background-color: #FFF0F5; }
-    .franco-day { background-color: #F5F5F5 !important; }
-    .header-cell { background-color: #4F46E5; color: white; }
-    .hover-effect:hover { transform: scale(1.02); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 6px; }
+    table { margin-bottom: 20px; width: 100%; background: white; }
+    th { background-color: #f0f0f0; }
+    .btn { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+    .btn:hover { background: #0056b3; }
   </style>
 </head>
-<body class="bg-gray-50 p-6">
-  <div class="max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold text-indigo-800 mb-6">
-      <i class="fas fa-calendar-alt mr-2"></i>Sistema de Horarios - TuEmpresa
-    </h1>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <!-- Sección de Configuración -->
-      <div class="bg-white p-6 rounded-lg shadow-md hover-effect">
-        <h2 class="text-xl font-semibold text-indigo-700 mb-4">
-          <i class="fas fa-cog mr-2"></i>Configuración Básica
-        </h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Mes y Año</label>
-            <input type="month" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Horario Comercial</label>
-            <div class="grid grid-cols-3 gap-2 mt-1">
-              <select class="rounded-md border-gray-300 shadow-sm p-2 border">
-                <option>Lunes a Viernes</option>
-                <option>Lunes a Sábado</option>
-                <option>Todos los días</option>
-              </select>
-              <input type="time" class="rounded-md border-gray-300 shadow-sm p-2 border" value="13:00">
-              <input type="time" class="rounded-md border-gray-300 shadow-sm p-2 border" value="21:00">
-            </div>
-          </div>
-        </div>
-      </div>
+<body>
+  <h1>Asignador de Breaks</h1>
 
-      <!-- Estadísticas Rápidas -->
-      <div class="bg-white p-6 rounded-lg shadow-md hover-effect">
-        <h2 class="text-xl font-semibold text-indigo-700 mb-4">
-          <i class="fas fa-chart-bar mr-2"></i>Resumen del Mes
-        </h2>
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-blue-50 p-3 rounded-lg">
-            <p class="text-sm text-blue-800">Total Empleados</p>
-            <p class="text-2xl font-bold text-blue-600">24</p>
-          </div>
-          <div class="bg-green-50 p-3 rounded-lg">
-            <p class="text-sm text-green-800">Horas Promedio</p>
-            <p class="text-2xl font-bold text-green-600">98.5</p>
-          </div>
-          <div class="bg-yellow-50 p-3 rounded-lg">
-            <p class="text-sm text-yellow-800">Min. Horas</p>
-            <p class="text-2xl font-bold text-yellow-600">72 ✔️</p>
-          </div>
-          <div class="bg-red-50 p-3 rounded-lg">
-            <p class="text-sm text-red-800">Max. Horas</p>
-            <p class="text-2xl font-bold text-red-600">125 ✔️</p>
-          </div>
-        </div>
-      </div>
-    </div>
+  <h2>Cargar empleados y turnos</h2>
+  <textarea id="input" rows="12" style="width: 100%;">
+Empleado,Sector,Inicio,Fin
+Carla,Pista,13:00,21:00
+Juan,Caja,14:00,22:00
+Sofía,Caja,14:00,22:00
+Luis,Cafe,14:00,22:00
+Maria,Cocina,16:00,20:00
+    </textarea>
 
-    <!-- Selector de Vistas -->
-    <div class="mb-6 bg-white p-4 rounded-lg shadow">
-      <div class="flex space-x-4">
-        <button class="px-4 py-2 bg-indigo-600 text-white rounded-md">Vista Mensual</button>
-        <button class="px-4 py-2 bg-white border border-gray-300 rounded-md">Vista Semanal</button>
-        <button class="px-4 py-2 bg-white border border-gray-300 rounded-md">Vista por Empleado</button>
-        <button class="px-4 py-2 bg-white border border-gray-300 rounded-md">Vista por Sector</button>
-      </div>
-    </div>
+  <h2>Horas pico (una por línea, formato HH:MM-HH:MM)</h2>
+  <textarea id="pico" rows="3" style="width: 100%;">13:00-14:00
+18:30-20:00</textarea>
 
-    <!-- Calendario de Horarios -->
-    <div class="overflow-x-auto bg-white rounded-lg shadow-md mb-8">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead>
-          <tr>
-            <th class="px-6 py-3 header-cell text-left text-xs font-medium uppercase tracking-wider">Empleado</th>
-            <th class="px-6 py-3 header-cell text-left text-xs font-medium uppercase tracking-wider">Lun 3</th>
-            <th class="px-6 py-3 header-cell text-left text-xs font-medium uppercase tracking-wider">Mar 4</th>
-            <th class="px-6 py-3 header-cell text-left text-xs font-medium uppercase tracking-wider">Mié 5</th>
-            <!-- Más días... -->
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <!-- Ejemplo de fila de empleado -->
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap font-medium">
-              <input type="text" class="border-b border-gray-300 bg-transparent" placeholder="Nombre Empleado">
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap sector-color-pista">
-              <select class="bg-transparent border-none">
-                <option>Pista</option>
-                <option>Caja</option>
-                <option>Depósito</option>
-                <option>Cocina</option>
-                <option>Café</option>
-              </select><br>
-              <input type="time" value="09:00" class="w-20 bg-transparent border-none"> - 
-              <input type="time" value="17:00" class="w-20 bg-transparent border-none">
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap sector-color-caja">
-              <span class="font-medium">Caja</span><br>
-              14:00 - 19:00 (5h)<br>
-              Sin break (menos de 8h)
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap sector-color-cafe">
-              <span class="font-medium">Café</span><br>
-              17:00 - 21:00 (4h)<br>
-              Break: 18:30-19:00
-            </td>
-            <!-- Más días... -->
-          </tr>
-          <!-- Más empleados... -->
-        </tbody>
-      </table>
-    </div>
+  <button class="btn" onclick="asignarBreaks()">Asignar breaks</button>
 
-    <!-- Sección de Sectores -->
-    <div class="mb-8">
-      <h2 class="text-xl font-semibold text-indigo-700 mb-4">
-        <i class="fas fa-users-cog mr-2"></i>Requisitos por Sector
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- Pista -->
-        <div class="bg-white p-4 rounded-lg shadow hover-effect">
-          <h3 class="font-bold text-pink-700 mb-2">Equipo de Pista</h3>
-          <ul class="text-sm space-y-1">
-            <li>1 desde 13:00</li>
-            <li>1 desde 14:00</li>
-            <li>1 desde 16:00</li>
-            <li>1 desde 17:00</li>
-            <li>Última hora: 1 persona</li>
-          </ul>
-        </div>
-        
-        <!-- Caja -->
-        <div class="bg-white p-4 rounded-lg shadow hover-effect">
-          <h3 class="font-bold text-purple-700 mb-2">Caja</h3>
-          <ul class="text-sm space-y-1">
-            <li>1 de 14:00-18:00</li>
-            <li>1 de 15/16-19/20</li>
-            <li>1 de 17:00-21:00</li>
-            <li>Última hora: 1 persona</li>
-            <li>Fines de semana: 2 personas</li>
-          </ul>
-        </div>
-        
-        <!-- Depósito -->
-        <div class="bg-white p-4 rounded-lg shadow hover-effect">
-          <h3 class="font-bold text-cyan-700 mb-2">Depósito</h3>
-          <ul class="text-sm space-y-1">
-            <li>1 persona por día</li>
-            <li>Días semana: 16:00-21:00</li>
-            <li>Sábados: 15:00-23:00</li>
-            <li>Domingos: 17:00-22:00</li>
-          </ul>
-        </div>
-        
-        <!-- Cocina -->
-        <div class="bg-white p-4 rounded-lg shadow hover-effect">
-          <h3 class="font-bold text-green-700 mb-2">Cocina</h3>
-          <ul class="text-sm space-y-1">
-            <li>1 persona 16:00-20:00</li>
-            <li>Jornada de 4 horas</li>
-          </ul>
-        </div>
-        
-        <!-- Café -->
-        <div class="bg-white p-4 rounded-lg shadow hover-effect">
-          <h3 class="font-bold text-pink-300 mb-2">Café</h3>
-          <ul class="text-sm space-y-1">
-            <li>1 de 14:00-18:00</li>
-            <li>1 de 17:00-21:00</li>
-            <li>Última hora: 1 persona</li>
-            <li>Fines de semana: 1 persona</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+  <h2>Resultado</h2>
+  <table id="resultado">
+    <thead>
+      <tr>
+        <th>Empleado</th>
+        <th>Sector</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Break asignado</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    <!-- Formulario para Nuevos Empleados -->
-    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-      <h2 class="text-xl font-semibold text-indigo-700 mb-4">
-        <i class="fas fa-user-plus mr-2"></i>Agregar Empleado
-      </h2>
-      <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Empleado</label>
-          <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Sectores</label>
-          <select multiple class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border h-24">
-            <option>Pista</option>
-            <option>Caja</option>
-            <option>Depósito</option>
-            <option>Cocina</option>
-            <option>Café</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Horas Máx. (Contrato)</label>
-          <input type="number" value="125" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Horas Máx. (Asignar)</label>
-          <input type="number" value="110" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-        </div>
-        <div class="md:col-span-2 lg:col-span-4">
-          <button type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-            <i class="fas fa-save mr-2"></i>Guardar Empleado
-          </button>
-        </div>
-      </form>
-    </div>
+<script>
+function parseHora(hora) {
+  const [h, m] = hora.split(":").map(Number);
+  return h * 60 + m;
+}
 
-    <!-- Panel de Control -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-xl font-semibold text-indigo-700 mb-4">
-        <i class="fas fa-tasks mr-2"></i>Panel de Control
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button class="p-4 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200">
-          <i class="fas fa-random mr-2"></i>Auto-Programar
-        </button>
-        <button class="p-4 bg-green-100 text-green-800 rounded-lg hover:bg-green-200">
-          <i class="fas fa-file-export mr-2"></i>Exportar a Excel
-        </button>
-        <button class="p-4 bg-red-100 text-red-800 rounded-lg hover:bg-red-200">
-          <i class="fas fa-bell mr-2"></i>Ver Alertas (3)
-        </button>
-      </div>
-    </div>
-  </div>
+function enRango(hora, desde, hasta) {
+  return hora >= desde && hora < hasta;
+}
 
-  <script>
-    // Lógica para la selección de días y asignación de turnos
-    document.addEventListener('DOMContentLoaded', function() {
-      // Aquí iría la lógica para interactuar con Google Sheets API
-      // y gestionar la asignación de turnos, validaciones, etc.
-      console.log('Sistema de horarios listo');
-    });
-  </script>
+function asignarBreaks() {
+  const empleados = document.getElementById("input").value.trim().split("\n").slice(1);
+  const horasPico = document.getElementById("pico").value.trim().split("\n").map(l => {
+    const [d, h] = l.split("-").map(parseHora);
+    return { desde: d, hasta: h };
+  });
+
+  const asignados = [];
+  const resultado = document.querySelector("#resultado tbody");
+  resultado.innerHTML = "";
+
+  empleados.forEach(linea => {
+    const [nombre, sector, inicioStr, finStr] = linea.split(",");
+    const inicio = parseHora(inicioStr);
+    const fin = parseHora(finStr);
+    const desde = inicio + 90;
+    const hasta = fin - 60;
+
+    let breakAsignado = "No asignado";
+
+    for (let t = desde; t <= hasta; t += 15) {
+      const tFin = t + 30;
+
+      const enPico = horasPico.some(p => enRango(t, p.desde, p.hasta) || enRango(tFin - 1, p.desde, p.hasta));
+      if (enPico) continue;
+
+      const mismoSector = asignados.filter(e => e.sector === sector && (
+        enRango(t, e.breakInicio, e.breakFin) || enRango(tFin - 1, e.breakInicio, e.breakFin)
+      ));
+      if (mismoSector.length > 0) continue;
+
+      const enEseMomento = asignados.filter(e => (
+        enRango(t, e.breakInicio, e.breakFin) || enRango(tFin - 1, e.breakInicio, e.breakFin)
+      ));
+      if (enEseMomento.length >= 2) continue;
+
+      breakAsignado = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+      asignados.push({ nombre, sector, breakInicio: t, breakFin: tFin });
+      break;
+    }
+
+    const fila = `<tr><td>${nombre}</td><td>${sector}</td><td>${inicioStr}</td><td>${finStr}</td><td>${breakAsignado}</td></tr>`;
+    resultado.innerHTML += fila;
+  });
+}
+</script>
 </body>
 </html>
