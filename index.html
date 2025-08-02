@@ -6,7 +6,7 @@
   <title>Planificador de Breaks</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Arial', sans-serif;
       padding: 30px;
       background: linear-gradient(to right, #e0f7fa, #ffffff);
       color: #102027;
@@ -125,77 +125,4 @@ function agregarEmpleado() {
   const inicio = document.getElementById("inicio").value;
   const fin = document.getElementById("fin").value;
 
-  if (!nombre || !inicio || !fin) {
-    alert("Por favor completá todos los campos.");
-    return;
-  }
-
-  empleados.push({ nombre, sector, inicio, fin });
-
-  document.getElementById("nombre").value = "";
-  document.getElementById("inicio").value = "";
-  document.getElementById("fin").value = "";
-
-  mostrarLista();
-}
-
-function mostrarLista() {
-  const contenedor = document.getElementById("empleados-lista");
-  contenedor.innerHTML = `<strong>Empleados cargados:</strong><br>${empleados.map(e => `👤 ${e.nombre} - ${e.sector} (${e.inicio} a ${e.fin})`).join("<br>")}`;
-}
-
-function parseHora(hora) {
-  const [h, m] = hora.split(":").map(Number);
-  return h * 60 + m;
-}
-
-function enRango(hora, desde, hasta) {
-  return hora >= desde && hora < hasta;
-}
-
-function asignarBreaks() {
-  const horasPico = document.getElementById("pico").value.trim().split("\n").map(l => {
-    const [d, h] = l.split("-").map(parseHora);
-    return { desde: d, hasta: h };
-  });
-
-  const asignados = [];
-  const resultado = document.querySelector("#resultado tbody");
-  resultado.innerHTML = "";
-
-  empleados.forEach(({ nombre, sector, inicio, fin }) => {
-    const inicioMin = parseHora(inicio);
-    const finMin = parseHora(fin);
-    const desde = inicioMin + 90;
-    const hasta = finMin - 60;
-
-    let breakAsignado = "No asignado";
-
-    for (let t = desde; t <= hasta; t += 15) {
-      const tFin = t + 30;
-
-      const enPico = horasPico.some(p => enRango(t, p.desde, p.hasta) || enRango(tFin - 1, p.desde, p.hasta));
-      if (enPico) continue;
-
-      const mismoSector = asignados.filter(e => e.sector === sector && (
-        enRango(t, e.breakInicio, e.breakFin) || enRango(tFin - 1, e.breakInicio, e.breakFin)
-      ));
-      if (mismoSector.length > 0) continue;
-
-      const enEseMomento = asignados.filter(e => (
-        enRango(t, e.breakInicio, e.breakFin) || enRango(tFin - 1, e.breakInicio, e.breakFin)
-      ));
-      if (enEseMomento.length >= 2) continue;
-
-      breakAsignado = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
-      asignados.push({ nombre, sector, breakInicio: t, breakFin: tFin });
-      break;
-    }
-
-    const fila = `<tr><td>${nombre}</td><td>${sector}</td><td>${inicio}</td><td>${fin}</td><td>${breakAsignado}</td></tr>`;
-    resultado.innerHTML += fila;
-  });
-}
-</script>
-</body>
-</html>
+  if (!nombre || !inicio || !fin)
