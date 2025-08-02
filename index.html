@@ -7,7 +7,6 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap');
 
-    /* Reset básico */
     * {
       box-sizing: border-box;
     }
@@ -15,7 +14,7 @@
     body {
       margin: 0;
       font-family: 'Rubik', sans-serif;
-      background-color: #b71c1c; /* rojo oscuro */
+      background-color: #b71c1c;
       color: #fff;
       padding: 30px 15px;
       min-height: 100vh;
@@ -41,7 +40,7 @@
     }
 
     #formulario-empleado {
-      background-color: #f44336; /* rojo vibrante */
+      background-color: #f44336;
       padding: 25px 30px;
       border-radius: 12px;
       box-shadow: 0 6px 15px rgba(0,0,0,0.5);
@@ -218,40 +217,257 @@
           <th>Sector</th>
           <th>Inicio</th>
           <th>Fin</th>
+          <th>Break</th>
         </tr>
       </thead>
       <tbody id="resultado-body"></tbody>
     </table>
   </section>
 
-  <script>
-    function agregarEmpleado() {
-      const nombre = document.getElementById('nombre').value.trim();
-      const sector = document.getElementById('sector').value;
-      const inicio = document.getElementById('inicio').value;
+<script>
+  const empleados = [];
 
-      if (!nombre || !inicio) {
-        alert('Por favor completa Nombre e Inicio.');
-        return;
-      }
+  // Convierte "HH:MM" a minutos desde medianoche
+  function horaAMinutos(hora) {
+    const [h, m] = hora.split(':').map(Number);
+    return h * 60 + m;
+  }
 
-      const lista = document.getElementById('empleados-lista');
+  // Convierte minutos a "HH:MM"
+  function minutosAHora(minutos) {
+    const h = Math.floor(minutos / 60);
+    const m = minutos % 60;
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+  }
+
+  // Parsear horas pico (array de strings "HH:MM-HH:MM") a array de [inicio,minutos, fin,minutos]
+  function parseHorasPico(texto) {
+    return texto.split('\n').map(linea => {
+      const [inicio, fin] = linea.trim().split('-');
+      return [horaAMinutos(inicio), horaAMinutos(fin)];
+    }).filter(([ini,fin]) => !isNaN(ini) && !isNaN(fin));
+  }
+
+  // Chequear si dos intervalos [a1,a2] y [b1,b2] se traslapan
+  function seTraslapan([a1,a2],[b1,b2]) {
+    return a1 < b2 && b1 < a2;
+  }
+
+  // Chequear si un intervalo está dentro de otro (incluyendo borde)
+  function estaDentro(intervalo, dentro) {
+    return intervalo[0] >= dentro[0] && intervalo[1] <= dentro[1];
+  }
+
+  // Chequear si un intervalo toca alguna hora pico
+  function tocaHoraPico(intervalo, horasPico) {
+    return horasPico.some(pico => seTraslapan(intervalo, pico));
+  }
+
+  function agregarEmpleado() {
+    const nombre = document.getElementById('nombre').value.trim();
+    const sector = document.getElementById('sector').value;
+    const inicio = document.getElementById('inicio').value;
+
+    if (!nombre || !inicio) {
+      alert('Por favor completa Nombre e Inicio.');
+      return;
+    }
+
+    // Verifico que no haya empleado con mismo nombre y sector e inicio igual (para evitar duplicados exactos)
+    const existe = empleados.some(e => e.nombre === nombre && e.sector === sector && e.inicio === inicio);
+    if (existe) {
+      alert('Este empleado ya fue agregado con ese sector y horario.');
+      return;
+    }
+
+    empleados.push({ nombre, sector, inicio });
+
+    actualizarListaEmpleados();
+
+    document.getElementById('nombre').value = '';
+    document.getElementById('inicio').value = '';
+  }
+
+  function actualizarListaEmpleados() {
+    const lista = document.getElementById('empleados-lista');
+    lista.innerHTML = '';
+
+    empleados.forEach((e, i) => {
       const div = document.createElement('div');
-      div.textContent = `${nombre} - ${sector} - Inicia a las ${inicio}`;
+      div.textContent = `${e.nombre} - ${e.sector} - Inicia a las ${e.inicio}`;
       div.style.padding = '8px 12px';
       div.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
       div.style.borderRadius = '8px';
       div.style.marginBottom = '10px';
+
+      // Botón para eliminar empleado
+      const btnEliminar = document.createElement('button');
+      btnEliminar.textContent = '✖';
+      btnEliminar.style.marginLeft = '15px';
+      btnEliminar.style.background = '#bf360c';
+      btnEliminar.style.border = 'none';
+      btnEliminar.style.color = '#fff';
+      btnEliminar.style.borderRadius = '6px';
+      btnEliminar.style.cursor = 'pointer';
+      btnEliminar.style.padding = '2px 8px';
+      btnEliminar.title = 'Eliminar empleado';
+      btnEliminar.onclick = () => {
+        empleados.splice(i, 1);
+        actualizarListaEmpleados();
+      };
+
+      div.appendChild(btnEliminar);
       lista.appendChild(div);
+    });
+  }
 
-      // Limpio inputs
-      document.getElementById('nombre').value = '';
-      document.getElementById('inicio').value = '';
+  function asignarBreaks() {
+    const horasPicoTexto = document.getElementById('pico').value;
+    const horasPico = parseHorasPico(horasPicoTexto);
+
+    // Primero calculamos fin = inicio + 8 horas (480 minutos)
+    empleados.forEach(e => {
+      e.inicioMin = horaAMinutos(e.inicio);
+      e.finMin = e.inicioMin + 480;
+    });
+
+    // Para cada empleado asignaremos el break de 30 minutos que cumpla las reglas:
+    // - No en la primer 1.5h (90min) del turno
+    // - No en la última 1h (60min)
+    // - No en horas pico
+    // - No que choque con break de mismo sector
+    // - No más de 2 breaks simultáneos en pista
+    // - No más de 2 breaks simultáneos entre cafe+cocina
+    // - No más de 2 breaks simultáneos en caja
+
+    // Para controlar break simultáneos se guardan los breaks asignados: [{inicio, fin, sector, empleado}]
+    const breaksAsignados = [];
+
+    // Función que verifica si un break candidato es válido
+    function esBreakValido(inicioBreak, empleado) {
+      const finBreak = inicioBreak + 30;
+      const intervalo = [inicioBreak, finBreak];
+
+      // Regla 1: No en primer 90 minutos
+      if (inicioBreak < empleado.inicioMin + 90) return false;
+      // Regla 2: No en última 1 hora
+      if (finBreak > empleado.finMin - 60) return false;
+      // Regla 3: No en horas pico
+      if (tocaHoraPico(intervalo, horasPico)) return false;
+
+      // Regla 4: No dos empleados del mismo sector en break simultáneo
+      for (const b of breaksAsignados) {
+        if (seTraslapan(intervalo, [b.inicio, b.fin])) {
+          if (b.sector === empleado.sector) {
+            return false;
+          }
+        }
+      }
+
+      // Contar breaks simultáneos en el intervalo
+      // Función para contar breaks simultáneos para sectores específicos
+      const solapanCon = breaksAsignados.filter(b => seTraslapan(intervalo, [b.inicio, b.fin]));
+
+      // Regla 5 y 6: Control de simultáneos según sector
+      // Se permiten hasta 2 breaks simultáneos en pista o caja
+      // En cafe y cocina juntos no más de 2 simultáneos
+      // Se permiten hasta 2 simultáneos en total
+
+      // Contamos breaks simultáneos por sector agrupado:
+      const sectoresPistaCaja = ['Pista', 'Caja'];
+      const sectoresCafeCocina = ['Cafe', 'Cocina'];
+
+      // Contadores:
+      let simultaneoPistaCaja = 0;
+      let simultaneoCafeCocina = 0;
+
+      solapanCon.forEach(b => {
+        if (sectoresPistaCaja.includes(b.sector)) simultaneoPistaCaja++;
+        else if (sectoresCafeCocina.includes(b.sector)) simultaneoCafeCocina++;
+      });
+
+      // Según el sector del empleado, verificamos si no supera la cantidad permitida
+      if (sectoresPistaCaja.includes(empleado.sector)) {
+        if (simultaneoPistaCaja >= 2) return false;
+      } else if (sectoresCafeCocina.includes(empleado.sector)) {
+        if (simultaneoCafeCocina >= 2) return false;
+      } else if (empleado.sector === 'Caja') {
+        // Caja igual que pista, ya considerado arriba
+        if (simultaneoPistaCaja >= 2) return false;
+      }
+
+      // Además, máximo 2 breaks simultáneos en total en cualquier sector
+      if (solapanCon.length >= 2) return false;
+
+      return true;
     }
 
-    function asignarBreaks() {
-      alert('Función asignarBreaks aún no implementada.');
-    }
-  </script>
+    // Ahora asignamos el break buscando en bloques de 5 minutos desde inicio+90 hasta fin-60-30 (espacio para break)
+    empleados.forEach(empleado => {
+      let asignado = false;
+      for (
+        let t = empleado.inicioMin + 90;
+        t <= empleado.finMin - 60 - 30;
+        t += 5
+      ) {
+        if (esBreakValido(t, empleado)) {
+          empleado.breakInicio = t;
+          empleado.breakFin = t + 30;
+          breaksAsignados.push({
+            inicio: empleado.breakInicio,
+            fin: empleado.breakFin,
+            sector: empleado.sector,
+            empleado: empleado.nombre,
+          });
+          asignado = true;
+          break;
+        }
+      }
+      if (!asignado) {
+        // Si no se pudo asignar break válido, lo dejamos en null
+        empleado.breakInicio = null;
+        empleado.breakFin = null;
+      }
+    });
+
+    // Mostrar resultados en la tabla
+    const tbody = document.getElementById('resultado-body');
+    tbody.innerHTML = '';
+
+    empleados.forEach(e => {
+      const tr = document.createElement('tr');
+
+      const tdNombre = document.createElement('td');
+      tdNombre.textContent = e.nombre;
+
+      const tdSector = document.createElement('td');
+      tdSector.textContent = e.sector;
+
+      const tdInicio = document.createElement('td');
+      tdInicio.textContent = e.inicio;
+
+      const tdFin = document.createElement('td');
+      tdFin.textContent = minutosAHora(e.finMin);
+
+      const tdBreak = document.createElement('td');
+      if (e.breakInicio !== null) {
+        tdBreak.textContent =
+          minutosAHora(e.breakInicio) + ' - ' + minutosAHora(e.breakFin);
+      } else {
+        tdBreak.textContent = 'No asignado';
+        tdBreak.style.color = '#ffcccb'; // rojo claro para destacar
+      }
+
+      tr.appendChild(tdNombre);
+      tr.appendChild(tdSector);
+      tr.appendChild(tdInicio);
+      tr.appendChild(tdFin);
+      tr.appendChild(tdBreak);
+
+      tbody.appendChild(tr);
+    });
+  }
+</script>
+
 </body>
 </html>
